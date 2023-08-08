@@ -113,7 +113,7 @@ function syncEvents() {
       for (let [id, event] of autoEventsByEventId) {
         // Sanity check. ONLY delete events that have the autoSoccer tag. We should never encounter
         // this, but let's be extra careful about deleting things on calendars.
-        if (event.getTag("autoSoccer") !== null) {
+        if (event.getTag("autoSoccer") === null) {
           console.log("WARNING: skipped deleting untagged event: " + event.getTitle());
         } else {
           event.deleteEvent();
