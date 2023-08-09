@@ -43,7 +43,7 @@ function syncEvents() {
   // Go through all the events in each soccer calendar, and make sure we have
   // scheduled warmup time prior to all the games.
   let autoEvents = myCalendar.getEvents(START_DATE, END_DATE).filter(e => e.getTag("autoSoccer") !== null);
-  console.log("Found myevents: " + autoEvents);
+  console.log("Found myevents: " + autoEvents.map(e => e.getTag("autoSoccer")));
 
   let autoEventsByEventId = new Map<string, CalendarEvent>();
   for (let event of autoEvents) {
@@ -65,6 +65,7 @@ function syncEvents() {
     for (let i = 0; i < events.length; i++) {
       let e = events[i];
       let id = e.getId();
+      console.log(`Game ${e.getTitle()} with id ${id}`);
       let startTime = e.getStartTime();
       let endTime = e.getEndTime();
       let expectedWarmupStart = new Date(startTime.getTime() - calendarConfig.warmupDurationMins * 60000);
@@ -107,21 +108,24 @@ function syncEvents() {
           console.log("Update guest list for event: " + expectedTitle);
         }
       }
-
-      // If we have any items left in autoEventsByEventId, they're zombies that no longer correspond to
-      // a game. Delete them.
-      for (let [id, event] of autoEventsByEventId) {
-        // Sanity check. ONLY delete events that have the autoSoccer tag. We should never encounter
-        // this, but let's be extra careful about deleting things on calendars.
-        if (event.getTag("autoSoccer") === null) {
-          console.log("WARNING: skipped deleting untagged event: " + event.getTitle());
-        } else {
-          event.deleteEvent();
-          console.log("Deleted event " + event.getTitle() + " because its game no longer exists");
-        }
-      }
     }
+
+    console.log(Array.from(autoEventsByEventId).map(([_, e]) => e.getTag("autoSoccer")));
+
+
   }
+
+  autoEventsByEventId.forEach((event) => {
+    console.log(`Deleting ${event.getId()}`);
+    // Sanity check. ONLY delete events that have the autoSoccer tag. We should never encounter
+    // this, but let's be extra careful about deleting things on calendars.
+    if (event.getTag("autoSoccer") === null) {
+      console.log("WARNING: skipped deleting untagged event: " + event.getTitle());
+    } else {
+      event.deleteEvent();
+      console.log("Deleted event " + event.getTitle() + " because its game no longer exists");
+    }
+  });
 
   function generateWarmupTitle(calendarName: string, event: CalendarEvent) {
     return `${calendarName}: Warmup for ${event.getTitle()}`
